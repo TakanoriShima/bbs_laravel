@@ -14,7 +14,11 @@ class MessagesController extends Controller
      */
     public function index()
     {
-        //
+        // Messageモデルを使って全データ取得
+        $messages = Message::all();
+
+        // データを引き連れてviewへ移動
+        return view('messages.index', compact('messages'));
     }
 
     /**
