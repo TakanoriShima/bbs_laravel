@@ -99,7 +99,8 @@ public function store(Request $request)
      */
     public function edit(Message $message)
     {
-        //
+        // データを引き連れてviewへ移動
+        return view('messages.edit', compact('message', 'errors'));
     }
 
     /**
