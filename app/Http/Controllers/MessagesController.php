@@ -152,6 +152,12 @@ public function store(Request $request)
      */
     public function destroy(Message $message)
     {
-        //
+        // データベースからデータを削除
+        $message->delete();
+        
+        // index action へリダイレクト
+        return redirect('/');
+        
+        // return redirect('/')->with('flash_message', $flash_message);
     }
 }
