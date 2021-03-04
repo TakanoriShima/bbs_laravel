@@ -28,7 +28,11 @@ class MessagesController extends Controller
      */
     public function create()
     {
-        //
+        // 空のメッセージインスタンスを作成
+        $message = new Message();
+    
+        // データを引き連れてviewへ移動
+        return view('messages.create', compact('message'));
     }
 
     /**
