@@ -112,7 +112,36 @@ public function store(Request $request)
      */
     public function update(Request $request, Message $message)
     {
-        //
+        // 入力情報の取得
+        $name = $request->input('name');
+        $title = $request->input('title');
+        $body = $request->input('body');
+        $file =  $request->image;
+        
+        // https://qiita.com/ryo-program/items/35bbe8fc3c5da1993366
+        if ($file) { // ファイルが選択されていれば
+            // 現在時刻ともともとのファイル名を組み合わせてランダムなファイル名作成
+            $image = time() . $file->getClientOriginalName();
+            // アップロードするフォルダ名取得
+            $target_path = public_path('uploads/');
+            // アップロード処理
+            $file->move($target_path, $image);
+        } else { // ファイルが選択されていなければ元の画像のファイル名のまま
+            $image = $message->image;
+        }
+        
+        // インスタンス情報の更新
+        $message->name = $name;
+        $message->title = $title;
+        $message->body = $body;
+        $message->image = $image;
+
+        // データベースに保存
+        $message->save();
+            
+        // show action へリダイレクト
+        return redirect('/messages/' . $message->id);
+
     }
 
     /**
