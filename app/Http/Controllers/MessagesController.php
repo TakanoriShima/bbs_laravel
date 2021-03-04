@@ -17,8 +17,12 @@ class MessagesController extends Controller
         // Messageモデルを使って全データ取得
         $messages = Message::all();
 
+        // セッションからフラッシュメッセージ取得しセッション情報破棄
+        $flash_message = session('flash_message');
+        session()->forget('flash_message');
+        
         // データを引き連れてviewへ移動
-        return view('messages.index', compact('messages'));
+        return view('messages.index', compact('messages', 'flash_message'));
     }
 
     /**
@@ -28,11 +32,15 @@ class MessagesController extends Controller
      */
     public function create()
     {
+        // セッションからエラーメッセージを取得しセッション情報破棄
+        $errors = session('errors');
+        session()->forget('errors');
+        
         // 空のメッセージインスタンスを作成
         $message = new Message();
     
         // データを引き連れてviewへ移動
-        return view('messages.create', compact('message'));
+        return view('messages.create', compact('message', 'errors'));
     }
 
     /**
@@ -41,7 +49,7 @@ class MessagesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-public function store(Request $request)
+    public function store(Request $request)
     {
         // 入力情報の取得
         $name = $request->input('name');
@@ -64,19 +72,41 @@ public function store(Request $request)
         
         // 入力情報をもとに新しいインスタンス作成
         $message = new Message();
-
-        $message->name = $name;
-        $message->title = $title;
-        $message->body = $body;
+        $message->name = $name === null ? '' : $name;
+        $message->title = $title === null ? '' : $title;
+        $message->body = $body === null ? '' : $body;
         $message->image = $image;
-
         
-        // データベースに保存
-        $message->save();
-        
-        // index action へリダイレクト
-        return redirect('/');
+        // $message->name = $name;
+        // $message->title = $title;
+        // $message->body = $body;
+        // $message->image = $image;
 
+        $errors = $message->validate($message);
+        
+        // 入力エラーが1つもなければ
+        if(count($errors) === 0){
+            
+            // データベースに保存
+            $message->save();
+            
+            // フラッシュメッセージをセッションに保存
+            session(['flash_message' => '投稿が成功しました。']);
+            // $request->session()->flash('flash_message', '投稿が成功しました。');
+            
+            // index action へリダイレクト
+            return redirect('/');
+            // return redirect('/')->with('flash_message', '投稿が成功しました。');
+
+        }else{
+            // セッションにエラー配列をセット
+            session(['errors' => $errors]);
+
+            // create action へリダイレクト
+            return redirect('/messages/create');
+
+        }
+        
     }
 
     /**
@@ -87,8 +117,12 @@ public function store(Request $request)
      */
     public function show(Message $message)
     {
+        // セッションからフラッシュメッセージ取得しセッション情報破棄
+        $flash_message = session('flash_message');
+        session()->forget('flash_message');
+        
         // データを引き連れてviewへ移動
-        return view('messages.show', compact('message'));
+        return view('messages.show', compact('message', 'flash_message'));
     }
 
     /**
@@ -99,6 +133,10 @@ public function store(Request $request)
      */
     public function edit(Message $message)
     {
+        // セッションからエラーメッセージを取得しセッション情報破棄
+        $errors = session('errors');
+        session()->forget('errors');
+        
         // データを引き連れてviewへ移動
         return view('messages.edit', compact('message', 'errors'));
     }
@@ -110,7 +148,7 @@ public function store(Request $request)
      * @param  \App\Message  $message
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Message $message)
+        public function update(Request $request, Message $message)
     {
         // 入力情報の取得
         $name = $request->input('name');
@@ -131,17 +169,41 @@ public function store(Request $request)
         }
         
         // インスタンス情報の更新
-        $message->name = $name;
-        $message->title = $title;
-        $message->body = $body;
+        // $message->name = $name;
+        // $message->title = $title;
+        // $message->body = $body;
+        // $message->image = $image;
+        
+        $message->name = $name === null ? '' : $name;
+        $message->title = $title === null ? '' : $title;
+        $message->body = $body === null ? '' : $body;
         $message->image = $image;
 
-        // データベースに保存
-        $message->save();
+        $errors = $message->validate($message);
+        
+        // 入力エラーが1つもなければ
+        if(count($errors) === 0){
             
-        // show action へリダイレクト
-        return redirect('/messages/' . $message->id);
+            // データベースに保存
+            $message->save();
+            
+            // フラッシュメッセージ作成
+            $flash_message = 'id: ' . $message->id . 'の投稿が更新されました。';
+            
+            // フラッシュメッセージをセッションに保存
+            session(['flash_message' => $flash_message]);
+            
+            // show action へリダイレクト
+            return redirect('/messages/' . $message->id);
 
+        }else{
+            // セッションにエラー配列をセット
+            session(['errors' => $errors]);
+
+            // edit action へリダイレクト
+            return redirect('/messages/' . $message->id . '/edit');
+
+        }
     }
 
     /**
@@ -152,8 +214,14 @@ public function store(Request $request)
      */
     public function destroy(Message $message)
     {
+        // フラッシュメッセージ作成
+        $flash_message = 'id: ' . $message->id . 'の投稿が削除されました。';
+        
         // データベースからデータを削除
         $message->delete();
+        
+        // フラッシュメッセージをセッションに保存
+        session(['flash_message' => $flash_message]);
         
         // index action へリダイレクト
         return redirect('/');
